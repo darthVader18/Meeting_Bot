@@ -9,51 +9,56 @@ from email.header import decode_header
 import re
 import schedule
 from datetime import datetime
+import os
+
 
 def get_email():
     # account credentials
     username = "jackrayn99@gmail.com"
     password = "test@1234"
-    # number of top emails to fetch
-    N = 3
 
     # create an IMAP4 class with SSL, use your email provider's IMAP server
     imap = imaplib.IMAP4_SSL("imap.gmail.com")
+
     # authenticate
     imap.login(username, password)
 
     # select a mailbox (in this case, the inbox mailbox)
     # use imap.list() to get the list of mailboxes
-    status, messages = imap.select('"[Gmail]/All Mail"')
+    imap.select('"[Gmail]/All Mail"', readonly = True) 
+  
+    response, messages = imap.search(None, 'UnSeen')
+
+    messages = messages[0].split()
+
+    # take it from last
+    latest = int(messages[-1])
+    
+    # take it from start
+    oldest = int(messages[0])
 
     # total number of emails
-    messages = int(messages[0])
+    #messages = int(messages[0])
 
-    for i in range(messages, messages-N, -1):
-        # fetch the email message by ID
+    for i in range(latest , latest-20, -1):
+        # fetch
         res, msg = imap.fetch(str(i), "(RFC822)")
+
         for response in msg:
             if isinstance(response, tuple):
-                # parse a bytes email into a message object
                 msg = email.message_from_bytes(response[1])
+                
+                # print required information
+                #print(msg["Subject"])
                 return msg
 
 
 def get_subject():
     msg = get_email()
-    # decode the email subject
-    subject, encoding = decode_header(msg["Subject"])[0]
-    if isinstance(subject, bytes):
-        # if it's a bytes, decode to str
-        subject = subject.decode(encoding)
-    
+    subject = msg["Subject"]
+    print(subject)
     return subject  
-    # decode email sender
-    # From, encoding = decode_header(msg.get("From"))[0]
-    # if isinstance(From, bytes):
-    #     From = From.decode(encoding)
-    #print("Subject:", subject)
-    #print("From:", From)
+    
 
 
 def get_body():
@@ -83,19 +88,19 @@ def get_glink():
                 "._\\+~#?&//=]*)")
     link = re.findall(regex_link, body)
     g_meet = "https://meet.google.com" + link[0][-1]
-    print(g_meet)
+    #print(g_meet)
     return g_meet
 
 
 def get_time():
     subject = str(get_subject())
-    print(subject)
+    #print(subject)
     joining_time = re.search(r'[0-9]{1,2}:?([0-9]{1,2})?(pm|am|AM|PM)', subject).group()
     #print(joining_time)
     if ":" not in joining_time:
         joining_time = joining_time[:-2]+":00"+joining_time[-2:]
     joining = datetime.strptime(joining_time, "%I:%M%p")
-    print(joining.time())
+    #print(joining.time())
     return str(joining.time())
     
 
