@@ -9,7 +9,6 @@ from email.header import decode_header
 import re
 import schedule
 from datetime import datetime
-import os
 
 
 def get_email():
@@ -23,40 +22,39 @@ def get_email():
     # authenticate
     imap.login(username, password)
 
-    # select a mailbox (in this case, the inbox mailbox)
-    # use imap.list() to get the list of mailboxes
-    imap.select('"[Gmail]/All Mail"', readonly = True) 
-  
-    response, messages = imap.search(None, 'UnSeen')
+    # Use "[Gmail]/Sent Mails" for fetching
+    # mails from Sent Mails.
+    imap.select('"[Gmail]/All Mail"',
+    readonly = True)
 
+    response, messages = imap.search(None,
+                'UnSeen')
     messages = messages[0].split()
 
+    # for i (int(messages[i]), int(messages[i+20]), +1):
+    #     i
     # take it from last
     latest = int(messages[-1])
-    
+
     # take it from start
     oldest = int(messages[0])
 
-    # total number of emails
-    #messages = int(messages[0])
-
-    for i in range(latest , latest-20, -1):
+    for i in range(oldest, latest, +1):
         # fetch
         res, msg = imap.fetch(str(i), "(RFC822)")
 
         for response in msg:
             if isinstance(response, tuple):
                 msg = email.message_from_bytes(response[1])
-                
-                # print required information
-                #print(msg["Subject"])
+                subject = msg["Subject"]
+                print(subject)
                 return msg
 
 
 def get_subject():
     msg = get_email()
     subject = msg["Subject"]
-    print(subject)
+    #print(subject)
     return subject  
     
 
@@ -100,7 +98,7 @@ def get_time():
     if ":" not in joining_time:
         joining_time = joining_time[:-2]+":00"+joining_time[-2:]
     joining = datetime.strptime(joining_time, "%I:%M%p")
-    #print(joining.time())
+    print(joining.time())
     return str(joining.time())
     
 
